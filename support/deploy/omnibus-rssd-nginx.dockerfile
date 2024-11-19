@@ -124,8 +124,9 @@ EXPOSE 80
 # Create the application startup script
 RUN echo '#!/bin/bash' > /start_application.sh && \
     echo 'tail -n +2 /rssd/index.tsv | while IFS=$'"'\\t'"' read -r expose_endpoint relative_path rssd_name port package_sql; do' >> /start_application.sh && \
+    echo 'mkdir -p /rssd/logs/' ; sleep 10 && \
     echo '  if [ "$expose_endpoint" = "1" ]; then' >> /start_application.sh && \
-    echo '    SQLPAGE_SITE_PREFIX="/${relative_path}" sleep 10 && surveilr web-ui -d "/rssd/$rssd_name" --port "${port}" --host 0.0.0.0 &' >> /start_application.sh && \
+    echo '    SQLPAGE_SITE_PREFIX="/${relative_path}" surveilr web-ui -d "/rssd/$rssd_name" --port "${port}" --host 0.0.0.0 > /rssd/logs/$rssd_name.log 2>&1 &' >> /start_application.sh && \
     echo '  fi' >> /start_application.sh && \
     echo 'done' >> /start_application.sh && \
     echo 'nginx -g "daemon off;"' >> /start_application.sh && \
