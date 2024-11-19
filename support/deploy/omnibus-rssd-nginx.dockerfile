@@ -130,9 +130,8 @@ RUN echo '#!/bin/bash' > /start_application.sh && \
     echo '    SQLPAGE_SITE_PREFIX="/${relative_path}" surveilr web-ui -d "/rssd/$rssd_name" --port "${port}" --host 0.0.0.0 >> /rssd/logs/$rssd_name.log 2>&1 &' >> /start_application.sh && \
     echo '  fi' >> /start_application.sh && \
     echo 'done' >> /start_application.sh && \
-    echo 'echo "Completed starting up surveilr web-ui services, view logs at - /rssd/logs/"' >> /start_application.sh && \
+    echo 'echo "Completed starting up surveilr web-ui services, you can view logs at path=/rssd/logs/ \n Started Nginx reverse-proxy"' >> /start_application.sh && \
     echo 'nginx -g "daemon off;"' >> /start_application.sh && \
-    echo 'echo "Started Nginx reverse-proxy"' >> /start_application.sh && \
     /bin/bash /generate_rssd_index.sh && \
     chmod +x /start_application.sh
 
