@@ -1109,6 +1109,8 @@ export async function SQL() {
 }
 
 // this will be used by any callers who want to serve it as a CLI with SDTOUT
+
+// this will be used by any callers who want to serve it as a CLI with SDTOUT
 if (import.meta.main) {
   console.log((await SQL()).join("\n"));
 }
