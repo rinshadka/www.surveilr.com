@@ -21,14 +21,6 @@ LOG_DIR="$RSSD_DIR/logs"
 echo "===== SURVEILR PIPELINE STARTED ====="
 
 # --------------------------------------------------
-# Validate required ENV (runtime, not build-time)
-# --------------------------------------------------
-: "${EG_SURVEILR_COM_IMAP_FOLDER:?Missing IMAP folder}"
-: "${EG_SURVEILR_COM_IMAP_USER_NAME:?Missing IMAP username}"
-: "${EG_SURVEILR_COM_IMAP_PASS:?Missing IMAP password}"
-: "${EG_SURVEILR_COM_IMAP_HOST:?Missing IMAP host}"
-
-# --------------------------------------------------
 # Prepare directories (CI-safe)
 # --------------------------------------------------
 rm -rf "$APP_DIR" "$RSSD_DIR"
@@ -39,13 +31,6 @@ mkdir -p "$APP_DIR" "$RSSD_DIR" "$LOG_DIR"
 # --------------------------------------------------
 cd "$APP_DIR"
 git clone https://github.com/surveilr/www.surveilr.com.git
-
-# --------------------------------------------------
-# index.tsv (create once)
-# --------------------------------------------------
-cat > "$RSSD_DIR/index.tsv" <<EOF
-expose_endpoint	relative_path	rssd_name	port	package_sql
-EOF
 
 # ==================================================
 # PREPARE PHASE
@@ -69,23 +54,6 @@ for path in "${PREPARE_PATHS[@]}"; do
       resourceName=surveilr.com \
       rssdPath="$RSSD_DIR/$rssd_name" \
       > "$LOG_DIR/$rssd_name.log" 2>&1
-
-  elif [[ "$base" == "content-assembler" ]]; then
-    cat > .env <<EOF
-IMAP_FOLDER=$EG_SURVEILR_COM_IMAP_FOLDER
-IMAP_USER_NAME=$EG_SURVEILR_COM_IMAP_USER_NAME
-IMAP_PASS=$EG_SURVEILR_COM_IMAP_PASS
-IMAP_HOST=$EG_SURVEILR_COM_IMAP_HOST
-EOF
-
-    deno run -A ./eg.surveilr.com-prepare.ts \
-      rssdPath="$RSSD_DIR/$rssd_name" \
-      > "$LOG_DIR/$rssd_name.log" 2>&1 || {
-        echo "❌ Content Assembler failed"
-        cat "$LOG_DIR/$rssd_name.log"
-        exit 1
-      }
-
   else
     deno run -A ./eg.surveilr.com-prepare.ts \
       rssdPath="$RSSD_DIR/$rssd_name" \
@@ -126,7 +94,7 @@ for path in "${PKG_PATHS[@]}"; do
   relative_path="${path#$REPO_DIR/}"
   rssd_name="$(echo "$relative_path" | tr '/' '-').sqlite.db"
 
-  echo "→ Package: $relative_path (port $port)"
+  echo "→ Package: $relative_path
 
   cd "$path"
   chmod +x package.sql.ts
@@ -134,11 +102,6 @@ for path in "${PKG_PATHS[@]}"; do
   surveilr shell ./package.sql.ts \
     -d "$RSSD_DIR/$rssd_name" \
     >> "$LOG_DIR/$rssd_name.log" 2>&1
-
-  echo -e "1\t$relative_path\t$rssd_name\t$port\t$relative_path/package.sql.ts" \
-    >> "$RSSD_DIR/index.tsv"
-
-  port=$((port + 1))
 done
 
 # ==================================================
